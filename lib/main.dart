@@ -47,55 +47,63 @@ class _MyHomePageState extends State<MyHomePage> {
     ev_screen()
   ];
 
-  Future<void> _onItemTapped(int index) async {
-    setState(() {
-      widget.selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         drawer: Drawer(
-          child: ListView(
+          backgroundColor: Colors.black87,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ListTile(
-                leading: Icon(Icons.map),
-                title: Text('Map'),
-                onTap: () {
-                  setState(() {
-                    widget.selectedIndex = 0;
-                  });
-                  Navigator.pop(context); // Close the drawer
-                },
+              Column(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.map,color: Colors.yellow,),
+                    title: Text('Map',style: TextStyle(color: Colors.white),),
+                    onTap: () {
+                      setState(() {
+                        widget.selectedIndex = 0;
+                      });
+                      Navigator.pop(context); // Close the drawer
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.book_outlined,color: Colors.yellow,),
+                    title: Text('Booking',style: TextStyle(color: Colors.white),),
+                    onTap: () {
+                      setState(() {
+                        widget.selectedIndex = 1;
+                      });
+                      Navigator.pop(context); // Close the drawer
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.ev_station_outlined,color: Colors.yellow,),
+                    title: Text('EV',style: TextStyle(color: Colors.white),),
+                    onTap: () {
+                      setState(() {
+                        widget.selectedIndex = 2;
+                      });
+                      Navigator.pop(context); // Close the drawer
+                    },
+                  ),
+                ],
               ),
-              ListTile(
-                leading: Icon(Icons.book_outlined),
-                title: Text('Booking'),
-                onTap: () {
-                  setState(() {
-                    widget.selectedIndex = 1;
-                  });
-                  Navigator.pop(context); // Close the drawer
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.ev_station_outlined),
-                title: Text('EV'),
-                onTap: () {
-                  setState(() {
-                    widget.selectedIndex = 2;
-                  });
-                  Navigator.pop(context); // Close the drawer
-                },
-              ),
+              Container(
+                margin: EdgeInsets.only(bottom: 5),
+                child: Text("Developed for GTU DE project",style: TextStyle(color: Colors.yellow.shade200),),
+              )
             ],
           ),
         ),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
+        backgroundColor: Colors.black87,
         centerTitle: true,
-        title: Text((widget.selectedIndex == 0) ? "Autospot (Offline Map)" : (widget.selectedIndex == 1) ? "Autospot (Online Booking)" : "Autospot (EV Booking)",style: TextStyle(color: Colors.black),),
+        title: Text((widget.selectedIndex == 0) ? "Autospot (Offline Map)" : (widget.selectedIndex == 1) ? "Autospot (Online Booking)" : "Autospot (EV Booking)",style: TextStyle(color: Colors.white),),
       ),
       body: SingleChildScrollView(
         child: Column(
