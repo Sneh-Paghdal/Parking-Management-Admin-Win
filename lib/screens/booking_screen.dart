@@ -15,20 +15,19 @@ class booking_screen extends StatefulWidget {
 
 class _booking_screenState extends State<booking_screen> {
 
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController mobileController = TextEditingController();
+  final TextEditingController dateController = TextEditingController();
+  List<dynamic> parkingBoxList = [];
+  int colNum = 0;
+  bool isDataLoading = true;
+  bool isBooking = false;
+
   @override
   void initState() {
     getParkingModel();
     super.initState();
   }
-
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController mobileController = TextEditingController();
-  List<dynamic> parkingBoxList = [];
-  int colNum = 0;
-  bool isDataLoading = true;
-  String fromDate = "";
-  String toDate = "";
-  bool isBooking = false;
 
   getParkingModel() async {
     bool isNetOn = await checkInternetConnection();
@@ -52,7 +51,7 @@ class _booking_screenState extends State<booking_screen> {
     }
   }
 
-  bookSlotPostApi(from,to,name,number,index) async {
+  bookSlotPostApi(from,name,number,index) async {
     bool isNetOn = await checkInternetConnection();
     if(isNetOn == true){
       setState(() {
@@ -60,7 +59,7 @@ class _booking_screenState extends State<booking_screen> {
       });
       var body = {
         "boxId": "${parkingBoxList[index]['boxId']}",
-        "timeSlot": "${from}|${to}|${name}|${number}"
+        "timeSlot": "${from}|${name}|${number}"
       };
       final url =Uri.parse('https://script.google.com/macros/s/AKfycbxoJAhcECoCf2CW-d0H0698Sx1razYqBujCc6L-yjWdWCBkUgyLiS5MVxUgtanN-nWk/exec');
       final response = await http.post(url,body: jsonEncode(body),headers: {
@@ -68,18 +67,52 @@ class _booking_screenState extends State<booking_screen> {
       });
       if(response.statusCode == 200){
         print("??????????????????");
+        clearFunction();
         getParkingModel();
-        Navigator.pop(context);
         Navigator.pop(context);
       }else if(response.statusCode == 302){
         print(response.statusCode);
+        clearFunction();
         getParkingModel();
-        Navigator.pop(context);
         Navigator.pop(context);
         setState(() {
           isBooking = false;
         });
         showToast(context, "Your Booking has been done", true, Colors.green, 100);
+      }
+    }else{
+      showToast(context, "Please turn on the internet", true, Colors.red, 100);
+    }
+  }
+
+  releaseSlotPostApi(index) async {
+    bool isNetOn = await checkInternetConnection();
+    if(isNetOn == true){
+      setState(() {
+        isBooking = true;
+      });
+      var body = {
+        "boxId": "${parkingBoxList[index]['boxId']}",
+        "timeSlot": "NB"
+      };
+      final url =Uri.parse('https://script.google.com/macros/s/AKfycbxoJAhcECoCf2CW-d0H0698Sx1razYqBujCc6L-yjWdWCBkUgyLiS5MVxUgtanN-nWk/exec');
+      final response = await http.post(url,body: jsonEncode(body),headers: {
+        "Content-Type": "application/json"
+      });
+      if(response.statusCode == 200){
+        print("??????????????????");
+        clearFunction();
+        getParkingModel();
+        Navigator.pop(context);
+      }else if(response.statusCode == 302){
+        print(response.statusCode);
+        clearFunction();
+        getParkingModel();
+        Navigator.pop(context);
+        setState(() {
+          isBooking = false;
+        });
+        showToast(context, "Slot released successfully", true, Colors.green, 100);
       }
     }else{
       showToast(context, "Please turn on the internet", true, Colors.red, 100);
@@ -100,311 +133,178 @@ class _booking_screenState extends State<booking_screen> {
           ),
         ),
       )
-      :
-          Container(
-            padding: EdgeInsets.all(10),
-            width: double.infinity,
-            child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: colNum, mainAxisExtent: 100, crossAxisSpacing: 10),
-                itemCount: parkingBoxList.length,
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemBuilder: (BuildContext context, int index) {
-                  return InkWell(
-                    onTap: () {
-                      if(parkingBoxList[index]['value'] == "NB"){
-                        onTabBottomSheet(context ,index);
-                      }else{
-                        bookedBottomSheet(context,index);
-                      }
-                    },
-                    child: Container(
-                      margin: EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(
-                          color: (parkingBoxList[index]['value'] == "NB") ? Colors.green.shade100 : Colors.red.shade100,
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.grey.shade200,
-                                spreadRadius: 0.5,
-                                blurRadius: 8)
-                          ],
-                          borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: (parkingBoxList[index]['value'] == "NB") ? Colors.green : Colors.red, // Set the border color here
-                          width: 0.5, // Set the border width (optional)
-                        ),
-                      ),
-                      padding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Center(
-                        child: Text((parkingBoxList[index]['value'] == "NB") ? "${parkingBoxList[index]['boxId']}" : "Booked"),
-                      ),
+          :
+      Container(
+        padding: EdgeInsets.all(10),
+        width: double.infinity,
+        child: GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: colNum, mainAxisExtent: 60, crossAxisSpacing: 10),
+            itemCount: parkingBoxList.length,
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemBuilder: (BuildContext context, int index) {
+              return InkWell(
+                onTap: () {
+                  if(parkingBoxList[index]['value'] == "NB" || parkingBoxList[index]['value'] == "Booked: NB"){
+                    onTabDialog(context,index);
+                  }else{
+                    onReleaseDialog(context,index);
+                  }
+                },
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: (parkingBoxList[index]['value'] == "NB" || parkingBoxList[index]['value'] == "Booked: NB") ? Colors.green.shade100 : (parkingBoxList[index]['value'] == "BA") ? Colors.yellow.shade100 : (parkingBoxList[index]['value'] == "EV") ? Colors.deepPurpleAccent.shade100 : Colors.red.shade100,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.grey.shade200,
+                          spreadRadius: 0.5,
+                          blurRadius: 8)
+                    ],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: (parkingBoxList[index]['value'] == "NB" || parkingBoxList[index]['value'] == "Booked: NB") ? Colors.green : (parkingBoxList[index]['value'] == "BA") ? Colors.yellow : (parkingBoxList[index]['value'] == "EV") ? Colors.deepPurpleAccent : Colors.red,
+                      width: 0.5, // Set the border width (optional)
                     ),
-                  );
-                }),
-          );
+                  ),
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Center(
+                    child: Text((parkingBoxList[index]['value'] == "NB" || parkingBoxList[index]['value'] == "Booked: NB") ? "${parkingBoxList[index]['boxId']}" : (parkingBoxList[index]['value'] == "BA") ? "BA" : (parkingBoxList[index]['value'] == "EV") ? "EV" : "B",style: TextStyle(fontSize: 14)),
+                  ),
+                ),
+              );
+            }),
+      );
   }
-
-  void onTabBottomSheet(BuildContext context , index) {
-    showModalBottomSheet(
+  void onTabDialog(BuildContext context, int index) {
+    String fromDate = "";
+    String toDate = "";
+    showDialog(
       context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(20.0),
-        ),
-      ),
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              width: double.infinity,
-              height: 200,
-              padding: EdgeInsets.all(10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Do you want to book this slot ?",style: TextStyle(fontWeight: FontWeight.w500),),
-                  Row(
-                    children: [
-                      Text("Date : ",style: TextStyle(fontWeight: FontWeight.w500),),
-                      Text("${DateFormat('dd MMMM yyyy').format(DateTime.now())}"),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Select appropriate time : ",style: TextStyle(fontWeight: FontWeight.w500),),
-                      Container(
-                        margin: EdgeInsets.only(top: 5),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Expanded(flex : 1,child: Container()),
-                            Expanded(
-                              flex: 3,
-                              child: InkWell(
-                                onTap: () async {
-                                  final selectedTime = await showTimePickerDialog(context);
-                                  setState(() {
-                                    fromDate = selectedTime;
-                                  });
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.only(top: 3,bottom: 3,left: 5,right: 5),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color:  Colors.black, // Set the border color here
-                                      width: 1, // Set the border width (optional)
-                                    ),
-                                    borderRadius : BorderRadius.circular(10),
-                                  ),
-                                    child: Center(child: Text((fromDate == "") ? "From" : fromDate))
-                                ),
-                              ),
-                            ),
-                            Expanded(flex : 1,child: Container()),
-                            Expanded(
-                              flex: 3,
-                              child: InkWell(
-                                onTap: () async {
-                                  final selectedTime = await showTimePickerDialog(context);
-                                  setState(() {
-                                    toDate = selectedTime;
-                                  });
-                                },
-                                child: Container(
-                                    padding: EdgeInsets.only(top: 3,bottom: 3,left: 5,right: 5),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.black, // Set the border color here
-                                        width: 1, // Set the border width (optional)
-                                      ),
-                                      borderRadius : BorderRadius.circular(10),
-                                    ),
-                                    child: Center(child: Text((toDate == "") ? "  To " : toDate))
-                                ),
-                              ),
-                            ),
-                            Expanded(flex : 1,child: Container()),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  InkWell(
-                    onTap: (){
-                      if(fromDate == "" || toDate == ""){
-                        showToast(context, "Please fill time in from and to", false, Colors.red, 100);
-                      }else{
-                        showDialogBox(context,index);
-                      }
-                    },
-                    child: Container(
-                      height: 50,
-                      margin: EdgeInsets.only(top: 15),
-                      width: double.infinity,
-                        decoration: BoxDecoration(
-                            color: Colors.blue.shade400,
-                            borderRadius: BorderRadius.circular(50)),
-                        child: Center(child: Text("Book The Slot",style: TextStyle(color: Colors.white),))),
-                  ),
-                ],
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<String> showTimePickerDialog(BuildContext context) async {
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-
-    DateTime selectedTime = now;
-
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Select Time'),
-          content: Container(
-            height: 300,
-            child: CupertinoDatePicker(
-              mode: CupertinoDatePickerMode.time,
-              initialDateTime: now,
-              minimumDate: today,
-              maximumDate: today.add(Duration(days: 1)),
-              onDateTimeChanged: (DateTime newDateTime) {
-                selectedTime = newDateTime;
-              },
-            ),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Done'),
-            ),
-          ],
-        );
-      },
-    );
-
-    final formattedTime = DateFormat('h:mm a').format(selectedTime);
-    print('Selected Time: $formattedTime');
-    return formattedTime;
-  }
-
-  void showDialogBox(BuildContext context,index) {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CupertinoAlertDialog(
-          title: Text('Details'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Name:  ',
-                  ),
-                  Container(
-                    width: 130,
-                    child: CupertinoTextField(
-                      textCapitalization: TextCapitalization.words,
-                      controller: nameController,
-                      style: TextStyle(fontSize: 13),
-                      padding: EdgeInsets.symmetric(vertical: 0.5),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: CupertinoColors.black,
-                            width: 0.5,
-                          ),
-                        ),
-                      ),
+              child: Container(
+                width: 600,
+                height: 330,
+                padding: EdgeInsets.all(10),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Do you want to book this slot?",
+                      style: TextStyle(fontWeight: FontWeight.w500,fontSize: 16),
                     ),
-                  ),
-                ],
-              ),
-              Container(height: 10,),
-              Row(
-                children: [
-                  Text(
-                    'Mobile No:  ',
-                  ),
-                  Container(
-                    width: 130,
-                    child: CupertinoTextField(
-                      controller: mobileController,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
+                    Row(
+                      children: [
+                        Text(
+                          "Date: ",
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Text("${DateFormat('dd MMMM yyyy').format(DateTime.now())}"),
                       ],
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(fontSize: 13),
-                      padding: EdgeInsets.symmetric(vertical: 0.5),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: CupertinoColors.black,
-                            width: 0.5,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Select appropriate time:   ",
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Container(
+                          width: 200,
+                          margin: EdgeInsets.only(top: 5),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              labelText: 'From',
+                              border: OutlineInputBorder(),
+                            ),
+                            controller: dateController,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Name:   ",
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Container(
+                          width: 200,
+                          margin: EdgeInsets.only(top: 5),
+                          child: TextField(
+                            controller: nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Enter your name',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (value) {
+                              // Handle onChanged event
+                              // You can update the fromDate variable or perform any other actions here
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Mobile Number:   ",
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Container(
+                          width: 200,
+                          margin: EdgeInsets.only(top: 5),
+                          child: TextField(
+                            controller: mobileController,
+                            decoration: InputDecoration(
+                              labelText: 'Enter your mobile number',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (value) {
+                              // Handle onChanged event
+                              // You can update the fromDate variable or perform any other actions here
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    InkWell(
+                      onTap: () {
+                        if (dateController.text.isEmpty || nameController.text.isEmpty || mobileController.text.isEmpty) {
+                          showToast(context, "Please fill all details", false, Colors.red, 100);
+                        } else {
+                          bookSlotPostApi(dateController.text, nameController.text, mobileController.text, index);
+                        }
+                      },
+                      child: Container(
+                        height: 50,
+                        margin: EdgeInsets.only(top: 15),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade400,
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Book The Slot",
+                            style: TextStyle(color: Colors.white),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            CupertinoDialogAction(
-              child: Text('OK',style: TextStyle(color: isBooking == true ? Colors.blue.shade50 : Colors.blue),),
-              onPressed: () {
-                if(nameController.text == "" || nameController.text.isEmpty || mobileController.text.isEmpty || mobileController.text == ""){
-                  showToast(context, "Please enter name and number", true, Colors.red, 100);
-                }else{
-                  bookSlotPostApi(fromDate,toDate,nameController.text.toString(),mobileController.text.toString(),index );
-                }
-                // Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void bookedBottomSheet(BuildContext context , index) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(20.0),
-        ),
-      ),
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              width: double.infinity,
-              height: 80,
-              padding: EdgeInsets.all(10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("This slot is booked: ",style: TextStyle(fontWeight: FontWeight.w500),),
-                  Text("Expected availability time : ${extractTimesFromInput(parkingBoxList[index]['value'])}",style: TextStyle(fontWeight: FontWeight.w500),),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -413,21 +313,44 @@ class _booking_screenState extends State<booking_screen> {
     );
   }
 
-  String extractTimesFromInput(String input) {
-    String times = "";
-    List<String> parts = input.split('|');
+  void onReleaseDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
+              ),
+              child: Container(
+                width: 500,
+                height: 60,
+                padding: EdgeInsets.all(10),
+                child: Container(
+                  child: Row(
+                    children: [
+                      Text("Are you want to release this slot ?     "),
+                      InkWell(
+                          onTap: (){
+                            releaseSlotPostApi(index);
+                          },
+                          child: Text("    Release",style: TextStyle(color: Colors.red),))
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
-    if (parts.length >= 2) {
-      String timePart = parts[1];
-      List<String> timeTokens = timePart.split('|');
-
-      timeTokens.forEach((timeToken) {
-        String time = timeToken.trim();
-        times = time;
-      });
-    }
-
-    return times;
+  clearFunction(){
+    mobileController.clear();
+    nameController.clear();
+    dateController.clear();
   }
 
 }
