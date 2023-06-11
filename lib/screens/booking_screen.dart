@@ -18,6 +18,7 @@ class _booking_screenState extends State<booking_screen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
+  final TextEditingController toDateController = TextEditingController();
   List<dynamic> parkingBoxList = [];
   int colNum = 0;
   bool isDataLoading = true;
@@ -51,7 +52,7 @@ class _booking_screenState extends State<booking_screen> {
     }
   }
 
-  bookSlotPostApi(from,name,number,index) async {
+  bookSlotPostApi(from,to,name,number,index) async {
     bool isNetOn = await checkInternetConnection();
     if(isNetOn == true){
       setState(() {
@@ -59,7 +60,7 @@ class _booking_screenState extends State<booking_screen> {
       });
       var body = {
         "boxId": "${parkingBoxList[index]['boxId']}",
-        "timeSlot": "${from}|${name}|${number}"
+        "timeSlot": "${from}|${to}|${name}|${number}"
       };
       final url =Uri.parse('https://script.google.com/macros/s/AKfycbxoJAhcECoCf2CW-d0H0698Sx1razYqBujCc6L-yjWdWCBkUgyLiS5MVxUgtanN-nWk/exec');
       final response = await http.post(url,body: jsonEncode(body),headers: {
@@ -95,7 +96,7 @@ class _booking_screenState extends State<booking_screen> {
         "boxId": "${parkingBoxList[index]['boxId']}",
         "timeSlot": "NB"
       };
-      final url =Uri.parse('https://script.google.com/macros/s/AKfycbxoJAhcECoCf2CW-d0H0698Sx1razYqBujCc6L-yjWdWCBkUgyLiS5MVxUgtanN-nWk/exec');
+      final url =Uri.parse('https://script.google.com/macros/s/AKfycbwpFQ1FEVefCeJQfTal8zybFP-4JfpJq-8LpAiVrV9ZLHNrF2IRd-pTnN_q4G6FyqmP/exec');
       final response = await http.post(url,body: jsonEncode(body),headers: {
         "Content-Type": "application/json"
       });
@@ -179,8 +180,6 @@ class _booking_screenState extends State<booking_screen> {
       );
   }
   void onTabDialog(BuildContext context, int index) {
-    String fromDate = "";
-    String toDate = "";
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -227,6 +226,17 @@ class _booking_screenState extends State<booking_screen> {
                               border: OutlineInputBorder(),
                             ),
                             controller: dateController,
+                          ),
+                        ),
+                        Container(
+                          width: 200,
+                          margin: EdgeInsets.only(top: 5),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              labelText: 'To',
+                              border: OutlineInputBorder(),
+                            ),
+                            controller: toDateController,
                           ),
                         ),
                       ],
@@ -281,10 +291,10 @@ class _booking_screenState extends State<booking_screen> {
                     ),
                     InkWell(
                       onTap: () {
-                        if (dateController.text.isEmpty || nameController.text.isEmpty || mobileController.text.isEmpty) {
+                        if (dateController.text.isEmpty || nameController.text.isEmpty || mobileController.text.isEmpty || toDateController.text.isEmpty) {
                           showToast(context, "Please fill all details", false, Colors.red, 100);
                         } else {
-                          bookSlotPostApi(dateController.text, nameController.text, mobileController.text, index);
+                          bookSlotPostApi(dateController.text, toDateController.text, nameController.text, mobileController.text, index);
                         }
                       },
                       child: Container(
@@ -330,7 +340,7 @@ class _booking_screenState extends State<booking_screen> {
                 child: Container(
                   child: Row(
                     children: [
-                      Text("Are you want to release this slot ?     "),
+                      Text("This slot is booked for ${extractTimesFromInput(parkingBoxList[index]['value'])},do you want to release this ?     "),
                       InkWell(
                           onTap: (){
                             releaseSlotPostApi(index);
@@ -351,6 +361,7 @@ class _booking_screenState extends State<booking_screen> {
     mobileController.clear();
     nameController.clear();
     dateController.clear();
+    toDateController.clear();
   }
 
 }
@@ -385,4 +396,21 @@ Future<bool> checkInternetConnection() async {
   } on SocketException catch (_) {
     return false;
   }
+}
+
+String extractTimesFromInput(String input) {
+  String times = "";
+  List<String> parts = input.split('|');
+
+  if (parts.length >= 2) {
+    String timePart = parts[1];
+    List<String> timeTokens = timePart.split('|');
+
+    timeTokens.forEach((timeToken) {
+      String time = timeToken.trim();
+      times = time;
+    });
+  }
+
+  return times;
 }

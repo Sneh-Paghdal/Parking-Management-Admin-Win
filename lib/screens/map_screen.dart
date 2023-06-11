@@ -89,7 +89,7 @@ class _map_screenState extends State<map_screen> {
         "boxId": "${parkingBoxList[index]['boxId']}",
         "timeSlot": "NB"
       };
-      final url =Uri.parse('https://script.google.com/macros/s/AKfycbwphB5_uy-p8Tfen6GwpFulFuXHOCQI5sGAR0jkkkFkRxISnvaEOkl6jYLVJ0Gk_UL5/exec');
+      final url =Uri.parse('https://script.google.com/macros/s/AKfycbwleOieXEIhB-lLktVxj_tmpgc29Dcy8yKu9LWtagzU2nKl-WQGGp3vPRDUQqFE78g/exec');
       final response = await http.post(url,body: jsonEncode(body),headers: {
         "Content-Type": "application/json"
       });

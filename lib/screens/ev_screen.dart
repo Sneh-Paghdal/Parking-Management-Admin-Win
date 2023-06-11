@@ -19,6 +19,7 @@ class _ev_screenState extends State<ev_screen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
+  final TextEditingController toDateController = TextEditingController();
   List<dynamic> parkingBoxList = [];
   int colNum = 0;
   bool isDataLoading = true;
@@ -46,7 +47,7 @@ class _ev_screenState extends State<ev_screen> {
     }
   }
 
-  bookSlotPostApi(from,name,number,index) async {
+  bookSlotPostApi(from,to,name,number,index) async {
     bool isNetOn = await checkInternetConnection();
     if(isNetOn == true){
       setState(() {
@@ -54,7 +55,7 @@ class _ev_screenState extends State<ev_screen> {
       });
       var body = {
         "boxId": "${parkingBoxList[index]['boxId']}",
-        "timeSlot": "${from}|${name}|${number}"
+        "timeSlot": "${from}|${to}|${name}|${number}"
       };
       final url =Uri.parse('https://script.google.com/macros/s/AKfycbwv_zbOitqP4yiu1xhgT7UdSCmehRYVmePEvO-eFoSv7e6DJwVtrxdvpEfxN5m3ekl4/exec');
       final response = await http.post(url,body: jsonEncode(body),headers: {
@@ -90,7 +91,7 @@ class _ev_screenState extends State<ev_screen> {
         "boxId": "${parkingBoxList[index]['boxId']}",
         "timeSlot": "NB"
       };
-      final url =Uri.parse('https://script.google.com/macros/s/AKfycbwv_zbOitqP4yiu1xhgT7UdSCmehRYVmePEvO-eFoSv7e6DJwVtrxdvpEfxN5m3ekl4/exec');
+      final url =Uri.parse('https://script.google.com/macros/s/AKfycbxfuMIJhWWoPu0HtTxa6VinclmF_zG4fuwWRy0RsL0ZevOM6wO5lTlUUH1dC5O0hNuF/exec');
       final response = await http.post(url,body: jsonEncode(body),headers: {
         "Content-Type": "application/json"
       });
@@ -230,6 +231,17 @@ class _ev_screenState extends State<ev_screen> {
                             controller: dateController,
                           ),
                         ),
+                        Container(
+                          width: 200,
+                          margin: EdgeInsets.only(top: 5),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              labelText: 'To',
+                              border: OutlineInputBorder(),
+                            ),
+                            controller: toDateController,
+                          ),
+                        ),
                       ],
                     ),
                     Row(
@@ -282,10 +294,10 @@ class _ev_screenState extends State<ev_screen> {
                     ),
                     InkWell(
                       onTap: () {
-                        if (dateController.text.isEmpty || nameController.text.isEmpty || mobileController.text.isEmpty) {
+                        if (dateController.text.isEmpty || nameController.text.isEmpty || mobileController.text.isEmpty || toDateController.text.isEmpty) {
                           showToast(context, "Please fill all details", false, Colors.red, 100);
                         } else {
-                          bookSlotPostApi(dateController.text, nameController.text, mobileController.text, index);
+                          bookSlotPostApi(dateController.text, toDateController.text, nameController.text, mobileController.text, index);
                         }
                       },
                       child: Container(
@@ -331,7 +343,7 @@ class _ev_screenState extends State<ev_screen> {
                 child: Container(
                   child: Row(
                     children: [
-                      Text("Are you want to release this slot ?     "),
+                      Text("This slot is booked for ${extractTimesFromInput(parkingBoxList[index]['value'])},do you want to release this ?     "),
                       InkWell(
                           onTap: (){
                             releaseSlotPostApi(index);
@@ -352,5 +364,6 @@ class _ev_screenState extends State<ev_screen> {
     mobileController.clear();
     nameController.clear();
     dateController.clear();
+    toDateController.clear();
   }
 }
