@@ -62,13 +62,13 @@ class _map_screenState extends State<map_screen> {
       if(response.statusCode == 200){
         print("??????????????????");
         clearFunction();
-        getParkingModel();
         Navigator.pop(context);
+        getParkingModel();
       }else if(response.statusCode == 302){
         print(response.statusCode);
         clearFunction();
-        getParkingModel();
         Navigator.pop(context);
+        getParkingModel();
         setState(() {
           isBooking = false;
         });
@@ -96,19 +96,20 @@ class _map_screenState extends State<map_screen> {
       if(response.statusCode == 200){
         print("??????????????????");
         clearFunction();
-        getParkingModel();
         Navigator.pop(context);
+        getParkingModel();
       }else if(response.statusCode == 302){
         print(response.statusCode);
         clearFunction();
-        getParkingModel();
         Navigator.pop(context);
+        getParkingModel();
         setState(() {
           isBooking = false;
         });
         showToast(context, "Slot released successfully", true, Colors.green, 100);
       }
     }else{
+      Navigator.pop(context);
       showToast(context, "Please turn on the internet", true, Colors.red, 100);
     }
   }
@@ -150,9 +151,9 @@ class _map_screenState extends State<map_screen> {
                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyHomePage(selectedIndex: 1)));
                   }else if(parkingBoxList[index]['value'] == "EV"){
                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyHomePage(selectedIndex: 2)));
-                  }if(parkingBoxList[index]['value'] == "NB" || parkingBoxList[index]['value'] == "Booked: NB"){
+                  }else if(parkingBoxList[index]['value'] == "NB" || parkingBoxList[index]['value'] == "Booked: NB"){
                     onTabDialog(context,index);
-                  }else{
+                  }else if(parkingBoxList[index]['value'] != "BA" || parkingBoxList[index]['value'] != "EV" || parkingBoxList[index]['value'] != "NB" || parkingBoxList[index]['value'] != "Booked: NB"){
                     onReleaseDialog(context,index);
                   }
                 },

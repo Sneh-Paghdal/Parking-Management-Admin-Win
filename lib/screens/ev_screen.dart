@@ -64,19 +64,20 @@ class _ev_screenState extends State<ev_screen> {
       if(response.statusCode == 200){
         print("??????????????????");
         clearFunction();
-        getParkingModel();
         Navigator.pop(context);
+        getParkingModel();
       }else if(response.statusCode == 302){
         print(response.statusCode);
         clearFunction();
-        getParkingModel();
         Navigator.pop(context);
+        getParkingModel();
         setState(() {
           isBooking = false;
         });
         showToast(context, "Your Booking has been done", true, Colors.green, 100);
       }
     }else{
+      Navigator.pop(context);
       showToast(context, "Please turn on the internet", true, Colors.red, 100);
     }
   }
